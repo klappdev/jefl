@@ -1,6 +1,6 @@
 package org.kl.state;
 
-public enum OverrideMode {
+public enum OverwrideMode {
 	SIMPLE_MODE(1),
 	DOE_MODE(3),
 	OPENBSD_MODE(3),
@@ -10,7 +10,7 @@ public enum OverrideMode {
 	
 	private int number;
 	
-	private OverrideMode(int number) {
+	private OverwrideMode(int number) {
 		this.number = number;
 	}
 	

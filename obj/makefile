@@ -16,7 +16,7 @@ erase_fs.o : ../jni/erase_fs.cpp erase_fs.hpp
 
 erase_fs.hpp : ../bin/org/kl/erase/EraseFS.class
 	javac -h ../jni ../src/org/kl/erase/EraseFS.java \
-				../src/org/kl/state/OverrideMode.java
+				../src/org/kl/state/OverwrideMode.java
 
 clean :
 	rm -f erase_fs.o libjefl.so
