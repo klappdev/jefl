@@ -18,9 +18,9 @@ JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_Strin
 /*
  * Class:     org_kl_erase_EraseFS
  * Method:    eraseFile
- * Signature: (Ljava/lang/String;Lorg/kl/state/OverrideMode;)Z
+ * Signature: (Ljava/lang/String;Lorg/kl/state/OverwrideMode;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2
+JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2
   (JNIEnv *, jclass, jstring, jobject);
 
 /*
@@ -34,9 +34,9 @@ JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseFiles___3Ljava_lang_St
 /*
  * Class:     org_kl_erase_EraseFS
  * Method:    eraseFiles
- * Signature: (Lorg/kl/state/OverrideMode;[Ljava/lang/String;)Z
+ * Signature: (Lorg/kl/state/OverwrideMode;[Ljava/lang/String;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverrideMode_2_3Ljava_lang_String_2
+JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverwrideMode_2_3Ljava_lang_String_2
   (JNIEnv *, jclass, jobject, jobjectArray);
 
 /*
@@ -50,9 +50,9 @@ JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_
 /*
  * Class:     org_kl_erase_EraseFS
  * Method:    eraseDirectory
- * Signature: (Ljava/lang/String;Lorg/kl/state/OverrideMode;Z)Z
+ * Signature: (Ljava/lang/String;Lorg/kl/state/OverwrideMode;Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2Z
+JNIEXPORT jboolean JNICALL Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2Z
   (JNIEnv *, jclass, jstring, jobject, jboolean);
 
 #ifdef __cplusplus
