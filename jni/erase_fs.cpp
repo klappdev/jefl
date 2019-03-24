@@ -3,6 +3,8 @@
 
 #include "org_kl_erase_EraseFS.h"
 
+namespace fs = std::filesystem;
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2(JNIEnv* env, jclass clazz, jstring path) {
 	std::cout << "call jni method " << __func__ << std::endl;
@@ -60,8 +62,26 @@ Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverrideMode_2_3Ljava_lang_S
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Z(JNIEnv* env, jclass clazz, jstring paths, jboolean recursived) {
+Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Z(JNIEnv* env, jclass clazz, jstring path, jboolean recursived) {
 	std::cout << "call jni method " << __func__ << std::endl;
+
+	const char* temp = env->GetStringUTFChars(path, nullptr);
+
+	for (auto& item: fs::directory_iterator(fs::path(temp))) {
+
+		if (fs::exists(item.path())) {
+			if (fs::is_symlink(item.path()) || fs::is_regular_file(item.path())) {
+				std::cout << " file regular | symlink : " << item.path() << std::endl;
+
+			} else {
+				std::cerr << " unknown file type: " << item.path() << std::endl;
+			}
+		} else {
+			std::cerr << " file not exist: " << item.path() << std::endl;
+		}
+	}
+
+	env->ReleaseStringUTFChars(path, temp);
 
 	return false;
 }
