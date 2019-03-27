@@ -73,17 +73,21 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overr
 		return false;
 	}
 
-	for (auto& item: fs::directory_iterator(folder)) {
-		if (fs::exists(item.path())) {
-			if (fs::is_symlink(item.path()) || fs::is_regular_file(item.path())) {
-				std::cout << " file regular | symlink : " << item.path() << std::endl;
+	for (const auto& item: fs::directory_iterator(folder)) {
+		const auto& entity = item.path();
 
-				eraser.show_permision(fs::status(item.path()).permissions());
+		if (fs::exists(entity)) {
+			if (fs::is_symlink(entity) || fs::is_regular_file(entity)) {
+				std::cout << " file regular | symlink : " << entity << std::endl;
+
+				if (!eraser.check_permision(entity, fs::status(entity).permissions())) {
+					std::cerr << "file hasn't enough permision: " << entity << std::endl;
+				}
 			} else {
-				std::cerr << "file unknown type: " << item.path() << std::endl;
+				std::cerr << "file unknown type: " << entity << std::endl;
 			}
 		} else {
-			std::cerr << "file doesn't exist: " << item.path() << std::endl;
+			std::cerr << "file doesn't exist: " << entity << std::endl;
 		}
 	}
 

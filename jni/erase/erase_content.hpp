@@ -13,6 +13,7 @@ namespace kl {
 		erase_content();
 		~erase_content();
 
+		bool check_permision(const fs::path& entity, fs::perms permision);
 		void show_permision(fs::perms permision);
 	};
 }
