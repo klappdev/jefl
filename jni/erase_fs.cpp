@@ -8,15 +8,19 @@
 namespace fs = std::filesystem;
 
 static jobject take_default_mode(JNIEnv *env);
+static kl::overwrite_mode take_mode(JNIEnv *env, jobject mode_object);
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(JNIEnv* env, jclass clazz, jstring path, jobject mode_object) {
 	const char* temp = env->GetStringUTFChars(path, nullptr);
 	const auto& file = fs::path(temp);
 
+	kl::erase_content eraser;
+
 	if (!fs::exists(file)) {
 		jclass exception = env->FindClass("org/kl/error/EraseException");
 		env->ThrowNew(exception, "File doesn't exist");
+		env->ReleaseStringUTFChars(path, temp);
 
 		return false;
 	}
@@ -24,13 +28,22 @@ Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMo
 	if (!fs::is_symlink(file) || !fs::is_regular_file(file)) {
 		jclass exception = env->FindClass("org/kl/error/EraseException");
 		env->ThrowNew(exception, "Path doesn't regular file or symlink");
+		env->ReleaseStringUTFChars(path, temp);
 
 		return false;
 	}
 
-	env->ReleaseStringUTFChars(path, temp);
+	if (!eraser.check_permision(file, fs::status(file).permissions())) {
+		jclass exception = env->FindClass("org/kl/error/EraseException");
+		env->ThrowNew(exception, "File hasn't enough permision (maybe not user)");
+		env->ReleaseStringUTFChars(path, temp);
+
+		return false;
+	}
 
 	/* TODO: release */
+
+	env->ReleaseStringUTFChars(path, temp);
 
 	return true;
 }
@@ -73,21 +86,31 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overr
 		return false;
 	}
 
-	for (const auto& item: fs::directory_iterator(folder)) {
-		const auto& entity = item.path();
+	for (const auto& item : fs::directory_iterator(folder)) {
+		const auto& file = item.path();
 
-		if (fs::exists(entity)) {
-			if (fs::is_symlink(entity) || fs::is_regular_file(entity)) {
-				std::cout << " file regular | symlink : " << entity << std::endl;
+		if (fs::exists(file)) {
+			std::cout << " file regular | symlink : " << file << std::endl;
 
-				if (!eraser.check_permision(entity, fs::status(entity).permissions())) {
-					std::cerr << "file hasn't enough permision: " << entity << std::endl;
-				}
-			} else {
-				std::cerr << "file unknown type: " << entity << std::endl;
+			if (!fs::is_regular_file(file)) {
+				std::cerr << "file unknown type: " << file << std::endl;
+				continue;
 			}
+
+			if (!eraser.check_permision(file, fs::status(file).permissions())) {
+				std::cerr << "file hasn't enough permision (maybe not user): " << file << std::endl;
+				continue;
+			}
+
+			if (!eraser.init_erase_etry(file, take_mode(env, mode_object))) {
+				std::cerr << "init erase entry fail: " << file << std::endl;
+				continue;
+			}
+
+
+			/* TODO: release */
 		} else {
-			std::cerr << "file doesn't exist: " << entity << std::endl;
+			std::cerr << "file doesn't exist: " << file << std::endl;
 		}
 	}
 
