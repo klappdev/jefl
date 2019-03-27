@@ -2,6 +2,7 @@
 #include <filesystem>
 
 #include "org_kl_erase_EraseFS.h"
+#include "erase/erase_content.hpp"
 #include "state/overwrite_mode.hpp"
 
 namespace fs = std::filesystem;
@@ -10,7 +11,28 @@ static jobject take_default_mode(JNIEnv *env);
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(JNIEnv* env, jclass clazz, jstring path, jobject mode_object) {
-	return false;
+	const char* temp = env->GetStringUTFChars(path, nullptr);
+	const auto& file = fs::path(temp);
+
+	if (!fs::exists(file)) {
+		jclass exception = env->FindClass("org/kl/error/EraseException");
+		env->ThrowNew(exception, "File doesn't exist");
+
+		return false;
+	}
+
+	if (!fs::is_symlink(file) || !fs::is_regular_file(file)) {
+		jclass exception = env->FindClass("org/kl/error/EraseException");
+		env->ThrowNew(exception, "Path doesn't regular file or symlink");
+
+		return false;
+	}
+
+	env->ReleaseStringUTFChars(path, temp);
+
+	/* TODO: release */
+
+	return true;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -20,7 +42,9 @@ Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2(JNIEnv* env, jclass cla
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverrideMode_2_3Ljava_lang_String_2(JNIEnv* env, jclass clazz, jobject mode_object, jobjectArray paths) {
-	return false;
+	/* TODO: release */
+
+	return true;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -31,25 +55,41 @@ Java_org_kl_erase_EraseFS_eraseFiles___3Ljava_lang_String_2(JNIEnv* env, jclass 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2Z(JNIEnv* env, jclass clazz, jstring path, jobject mode_object, jboolean recursived) {
 	const char* temp = env->GetStringUTFChars(path, nullptr);
+	const auto& folder = fs::path(temp);
 
-	for (auto& item: fs::directory_iterator(fs::path(temp))) {
+	kl::erase_content eraser;
 
+	if (!fs::exists(folder)) {
+		jclass exception = env->FindClass("org/kl/error/EraseException");
+		env->ThrowNew(exception, "Directory doesn't exist");
+
+		return false;
+	}
+
+	if (!fs::is_directory(folder)) {
+		jclass exception = env->FindClass("org/kl/error/EraseException");
+		env->ThrowNew(exception, "Path doesn't directory");
+
+		return false;
+	}
+
+	for (auto& item: fs::directory_iterator(folder)) {
 		if (fs::exists(item.path())) {
 			if (fs::is_symlink(item.path()) || fs::is_regular_file(item.path())) {
 				std::cout << " file regular | symlink : " << item.path() << std::endl;
 
-				/* show_permision(fs::status(item.path()).permissions()); */
+				eraser.show_permision(fs::status(item.path()).permissions());
 			} else {
-				std::cerr << " unknown file type: " << item.path() << std::endl;
+				std::cerr << "file unknown type: " << item.path() << std::endl;
 			}
 		} else {
-			std::cerr << " file not exist: " << item.path() << std::endl;
+			std::cerr << "file doesn't exist: " << item.path() << std::endl;
 		}
 	}
 
 	env->ReleaseStringUTFChars(path, temp);
 
-	return false;
+	return true;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

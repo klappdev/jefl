@@ -4,6 +4,7 @@ CFLAGS = -g3 -std=c++17 -ggdb3 -O0 -Wno-literal-suffix
 
 CPP_LIB = -lstdc++fs
 SRC_MAIN = erase_fs.o
+SRC_ERASE = erase_content.o
 
 UNAME := $(shell uname)
 
@@ -19,15 +20,19 @@ vpath %.class $(SRC_DIR)
 
 all : $(TARGET)
 
-$(TARGET) : $(SRC_MAIN)
+$(TARGET) : $(SRC_MAIN) $(SRC_ERASE)
 	g++ $(CFLAGS) -W -shared -o $@ $+ $(CPP_LIB)
+
+erase_content.o : ../jni/erase/erase_content.cpp ../jni/erase/erase_content.hpp  
+	g++ $(CFLAGS) -fPIC -c $< -o $@
 
 erase_fs.o : ../jni/erase_fs.cpp erase_fs.hpp 
 	g++ $(CFLAGS) -fPIC $(JNI_PATH) -shared -c $< -o $@ $(CPP_LIB)
 
 erase_fs.hpp : ../bin/org/kl/erase/EraseFS.class
 	javac -h $(JNI_DIR) ../src/org/kl/erase/EraseFS.java \
-				../src/org/kl/state/OverwrideMode.java
+				../src/org/kl/state/OverwrideMode.java	\
+				../src/org/kl/error/EraseException.java		
 
 clean :
-	rm -f erase_fs.o $(TARGET)
+	rm -f erase_fs.o erase_content.o $(TARGET)
