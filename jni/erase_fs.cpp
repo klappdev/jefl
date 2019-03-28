@@ -90,7 +90,7 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overr
 		const auto& file = item.path();
 
 		if (fs::exists(file)) {
-			std::cout << " file regular | symlink : " << file << std::endl;
+			std::cout << " file regular : " << file << std::endl;
 
 			if (!fs::is_regular_file(file)) {
 				std::cerr << "file unknown type: " << file << std::endl;
@@ -107,8 +107,22 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overr
 				continue;
 			}
 
+			if (!eraser.overwrite()) {
+				std::cerr << "overwrite entry fail: " << file << std::endl;
+				continue;
+			}
 
-			/* TODO: release */
+			try {
+				fs::resize_file(file, 0);
+			} catch (fs::filesystem_error& e) {
+				std::cerr << "truncate file fail: " << file << std::endl;
+				continue;
+			}
+
+			if (!eraser.remove(file)) {
+				std::cerr << "change name fail: " << file << std::endl;
+				continue;
+			}
 		} else {
 			std::cerr << "file doesn't exist: " << file << std::endl;
 		}

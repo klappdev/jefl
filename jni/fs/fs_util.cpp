@@ -25,20 +25,17 @@ std::size_t kl::fs_util::block_size(const std::string& path) {
 std::size_t kl::fs_util::count_hard_link(const std::string& path) {
 	std::size_t count;
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 	BY_HANDLE_FILE_INFORMATION file_info;
-	HANDLE handle = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-			                   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-	if (handle == INVALID_HANDLE_VALUE) {
+	auto handle = make_open_handle(CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+								   nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+	if (handle == nullptr) {
 		return 0;
 	}
 
-	if (GetFileInformationByHandle(handle, &file_info)) {
+	if (GetFileInformationByHandle(handle.get(), &file_info)) {
 		count = handle.nNumberOfLinks;
 	}
-
-	CloseHandle(handle);
 #else
 	struct stat file_info;
 
@@ -51,3 +48,25 @@ std::size_t kl::fs_util::count_hard_link(const std::string& path) {
 
 	return count;
 }
+
+kl::file_unique_ptr kl::fs_util::make_open_file(const std::string& path, const std::string& mode) {
+	FILE *handle = fopen(path.c_str(), mode.c_str());
+
+	std::cout << "open file " << path << std::endl;
+
+	if (handle == nullptr) {
+		return nullptr;
+	}
+
+	return kl::file_unique_ptr(handle);
+}
+
+#if defined(_MSC_VER)
+kl::handle_unique_ptr make_open_handle(HANDLE handle) {
+    if (handle == INVALID_HANDLE_VALUE || handle == nullptr) {
+        return nullptr;
+    }
+
+    return kl::handle_unique_ptr(handle);
+}
+#endif

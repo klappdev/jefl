@@ -4,6 +4,10 @@
 #include <filesystem>
 #include <iostream>
 
+#include <memory>
+#include <cstring>
+#include <random>
+
 #include <property/property.hpp>
 
 #include "../bean/erase_entry.hpp"
@@ -29,11 +33,23 @@ namespace kl {
 		bool init_erase_etry(const fs::path& entry, kl::overwrite_mode mode);
 		void reset_erase_etry();
 
+		bool remove(const fs::path& file);
+
+		bool overwrite();
+
 		SETTER_OBJ_CLR(erase_entry, entry);
-		SETTER_OBJ_RR(erase_entry, entry);
 		GETTER_OBJ_LR(erase_entry, entry);
 
 	private:
+		bool overwrite(const int pass, const int byte);
+		bool overwrite(const int pass);
+
+		ssize_t write_buffer(const size_t count, const size_t tail);
+
+		void random_name(std::string& file_name, size_t length);
+
+		std::unique_ptr<uint8_t[]> buffer;
+		kl::file_unique_ptr file;
 		erase_entry entry;
 	};
 }
