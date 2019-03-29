@@ -9,7 +9,7 @@ For secure erase file used next steps:
 
     > overwrite content file
     > truncate file 
-    > random rename name file
+    > random rename file
     > delete file
   
 There are the following methods of overwrite content file:

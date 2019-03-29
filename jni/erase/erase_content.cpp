@@ -1,6 +1,6 @@
 #include "erase_content.hpp"
 
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 
 kl::erase_content::erase_content() {}
 kl::erase_content::~erase_content() {}
@@ -115,11 +115,52 @@ bool kl::erase_content::overwrite() {
 
 		break;
 	case kl::overwrite_mode::DOD_MODE:
-		std::cerr << "DOD_MODE not implemented" << std::endl;
+		if (!overwrite_byte(1, 0xF6)) { return false; }
+		if (!overwrite_byte(2, 0x00)) { return false; }
+		if (!overwrite_byte(3, 0xFF)) { return false; }
+		if (!overwrite_random(4)) { return false; }
+		if (!overwrite_byte(5, 0x00)) { return false; }
+		if (!overwrite_byte(6, 0xFF)) { return false; }
+		if (!overwrite_random(7)) { return false; }
 
 		break;
 	case kl::overwrite_mode::GUTMAN_MODE:
-		std::cerr << "GUTMAN_MODE not implemented" << std::endl;
+		if (!overwrite_random(1)) { return false; }
+		if (!overwrite_random(2)) { return false; }
+		if (!overwrite_random(3)) { return false; }
+		if (!overwrite_random(4)) { return false; }
+		if (!overwrite_byte(5, 0x55)) { return false; }
+		if (!overwrite_byte(6, 0xAA)) { return false; }
+		if (!overwrite_bytes(7, "’I$")) { return false; }	/* 0x92, 0x49, 0x24 */
+		if (!overwrite_bytes(8, "I$’")) { return false; }	/* 0x49, 0x24, 0x92 */
+		if (!overwrite_bytes(9, "$’I")) { return false; }	/* 0x24, 0x92, 0x49 */
+		if (!overwrite_byte(10, 0x00)) { return false; }
+		if (!overwrite_byte(11, 0x11)) { return false; }
+		if (!overwrite_byte(12, 0x22)) { return false; }
+		if (!overwrite_byte(13, 0x33)) { return false; }
+		if (!overwrite_byte(14, 0x44)) { return false; }
+		if (!overwrite_byte(15, 0x55)) { return false; }
+		if (!overwrite_byte(16, 0x66)) { return false; }
+		if (!overwrite_byte(17, 0x77)) { return false; }
+		if (!overwrite_byte(18, 0x88)) { return false; }
+		if (!overwrite_byte(19, 0x99)) { return false; }
+		if (!overwrite_byte(20, 0xAA)) { return false; }
+		if (!overwrite_byte(21, 0xBB)) { return false; }
+		if (!overwrite_byte(22, 0xCC)) { return false; }
+		if (!overwrite_byte(23, 0xDD)) { return false; }
+		if (!overwrite_byte(24, 0xEE)) { return false; }
+		if (!overwrite_byte(25, 0xFF)) { return false; }
+		if (!overwrite_bytes(26, "’I$")) { return false; }	/* 0x92, 0x49, 0x24 */
+		if (!overwrite_bytes(27, "I$’")) { return false; }	/* 0x49, 0x24, 0x92 */
+		if (!overwrite_bytes(28, "$’I")) { return false; }	/* 0x24, 0x92, 0x49 */
+		if (!overwrite_bytes(29, "m¶Û")) { return false; }	/* 0x6D, 0xB6, 0xDB */
+		if (!overwrite_bytes(30, "¶Ûm")) { return false; }	/* 0xB6, 0xDB, 0x6D */
+		if (!overwrite_bytes(31, "Ûm¶")) { return false; }	/* 0xDB, 0x6D, 0xB6 */
+		if (!overwrite_random(32)) { return false; }
+		if (!overwrite_random(33)) { return false; }
+		if (!overwrite_random(34)) { return false; }
+		if (!overwrite_random(35)) { return false; }
+		if (!overwrite_byte(36, 0x00)) { return false; }
 
 		break;
 	default:
