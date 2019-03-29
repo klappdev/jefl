@@ -12,21 +12,21 @@ static kl::overwrite_mode take_mode(JNIEnv *env, jobject mode_object);
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(JNIEnv* env, jclass clazz, jstring path, jobject mode_object) {
+	jclass exception = env->FindClass("org/kl/error/EraseException");
+
 	const char* temp = env->GetStringUTFChars(path, nullptr);
 	const auto& file = fs::path(temp);
 
 	kl::erase_content eraser;
 
 	if (!fs::exists(file)) {
-		jclass exception = env->FindClass("org/kl/error/EraseException");
 		env->ThrowNew(exception, "File doesn't exist");
 		env->ReleaseStringUTFChars(path, temp);
 
 		return false;
 	}
 
-	if (!fs::is_symlink(file) || !fs::is_regular_file(file)) {
-		jclass exception = env->FindClass("org/kl/error/EraseException");
+	if (!fs::is_regular_file(file)) {
 		env->ThrowNew(exception, "Path doesn't regular file or symlink");
 		env->ReleaseStringUTFChars(path, temp);
 
@@ -34,14 +34,41 @@ Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMo
 	}
 
 	if (!eraser.check_permision(file, fs::status(file).permissions())) {
-		jclass exception = env->FindClass("org/kl/error/EraseException");
 		env->ThrowNew(exception, "File hasn't enough permision (maybe not user)");
 		env->ReleaseStringUTFChars(path, temp);
 
 		return false;
 	}
 
-	/* TODO: release */
+	if (!eraser.init_erase_etry(file, take_mode(env, mode_object))) {
+		env->ThrowNew(exception, "init erase entry fail");
+		env->ReleaseStringUTFChars(path, temp);
+
+		return false;
+	}
+
+	if (!eraser.overwrite()) {
+		env->ThrowNew(exception, "overwrite entry fail");
+		env->ReleaseStringUTFChars(path, temp);
+
+		return false;
+	}
+
+	try {
+		fs::resize_file(file, 0);
+	} catch (fs::filesystem_error& e) {
+		env->ThrowNew(exception, "truncate file fail");
+		env->ReleaseStringUTFChars(path, temp);
+
+		return false;
+	}
+
+	if (!eraser.remove(file)) {
+		env->ThrowNew(exception, "change name fail");
+		env->ReleaseStringUTFChars(path, temp);
+
+		return false;
+	}
 
 	env->ReleaseStringUTFChars(path, temp);
 
@@ -55,7 +82,15 @@ Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2(JNIEnv* env, jclass cla
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverrideMode_2_3Ljava_lang_String_2(JNIEnv* env, jclass clazz, jobject mode_object, jobjectArray paths) {
-	/* TODO: release */
+	size_t length = env->GetArrayLength(paths);
+
+	for (int i = 0; i < length; i++) {
+		jstring path = (jstring) env->GetObjectArrayElement(paths, i);
+
+		if (!Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(env, clazz, path, mode_object)) {
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -69,8 +104,6 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2Z(JNIEnv* env, jclass clazz, jstring path, jobject mode_object, jboolean recursived) {
 	const char* temp = env->GetStringUTFChars(path, nullptr);
 	const auto& folder = fs::path(temp);
-
-	kl::erase_content eraser;
 
 	if (!fs::exists(folder)) {
 		jclass exception = env->FindClass("org/kl/error/EraseException");
@@ -87,45 +120,9 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overr
 	}
 
 	for (const auto& item : fs::directory_iterator(folder)) {
-		const auto& file = item.path();
+		jstring file_path = env->NewStringUTF(item.path().c_str());
 
-		if (fs::exists(file)) {
-			std::cout << " file regular : " << file << std::endl;
-
-			if (!fs::is_regular_file(file)) {
-				std::cerr << "file unknown type: " << file << std::endl;
-				continue;
-			}
-
-			if (!eraser.check_permision(file, fs::status(file).permissions())) {
-				std::cerr << "file hasn't enough permision (maybe not user): " << file << std::endl;
-				continue;
-			}
-
-			if (!eraser.init_erase_etry(file, take_mode(env, mode_object))) {
-				std::cerr << "init erase entry fail: " << file << std::endl;
-				continue;
-			}
-
-			if (!eraser.overwrite()) {
-				std::cerr << "overwrite entry fail: " << file << std::endl;
-				continue;
-			}
-
-			try {
-				fs::resize_file(file, 0);
-			} catch (fs::filesystem_error& e) {
-				std::cerr << "truncate file fail: " << file << std::endl;
-				continue;
-			}
-
-			if (!eraser.remove(file)) {
-				std::cerr << "change name fail: " << file << std::endl;
-				continue;
-			}
-		} else {
-			std::cerr << "file doesn't exist: " << file << std::endl;
-		}
+		Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(env, clazz, file_path, mode_object);
 	}
 
 	env->ReleaseStringUTFChars(path, temp);

@@ -152,7 +152,7 @@ bool kl::erase_content::overwrite(const int pass) {
 
 	ssize_t writted = 0;
 
-#if 0
+#if 1
 	std::cerr << "buffer size : " << buffer_size << std::endl;
 	std::cerr << "file   size : " << file_size << std::endl;
 	std::cerr << "buffer count: " << count << std::endl;
@@ -192,7 +192,7 @@ ssize_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
 
 	if (count == 0) {
 		writted = std::fwrite(buffer.get(), 1, tail, file.get());
-#if 0
+#if 1
 		std::cerr << "writted: " << writted << " - " << tail << std::endl;
 #endif
 	} else {
@@ -201,7 +201,7 @@ ssize_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
 		}
 
 		writted += std::fwrite(buffer.get(), 1, tail, file.get());
-#if 0
+#if 1
 		std::cerr << "writted: " << writted << " - " << entry.get_file_size() << std::endl;
 #endif
 	}
@@ -216,7 +216,9 @@ void kl::erase_content::random_name(std::string& file_name, size_t length) {
 	std::mt19937 range {std::random_device{}()};
 	std::uniform_int_distribution<std::string::size_type> pick(0, sizeof(sequence) - 2);
 
+#if 0
 	std::cout << "file name: " << file_name << std::endl;
+#endif
 
 	result.reserve(length);
 
@@ -226,5 +228,7 @@ void kl::erase_content::random_name(std::string& file_name, size_t length) {
 
 	file_name = result;
 
+#if 0
 	std::cout << "random name: " << file_name << std::endl;
+#endif
 }
