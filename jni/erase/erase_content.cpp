@@ -1,5 +1,7 @@
 #include "erase_content.hpp"
 
+#define __DEBUG__ 1
+
 kl::erase_content::erase_content() {}
 kl::erase_content::~erase_content() {}
 
@@ -70,7 +72,11 @@ bool kl::erase_content::remove(const fs::path& file) {
 	std::string file_name   = file.filename();
 	fs::path copy_file = file;
 
-	random_name(file_name, file_name.size());
+	file_name = random_text(file_name.size());
+
+#if __DEBUG__
+	std::cout << "file name: "  << file_name	<< std::endl;
+#endif
 
 	copy_file.replace_filename(fs::path(file_name));
 
@@ -87,21 +93,25 @@ bool kl::erase_content::remove(const fs::path& file) {
 bool kl::erase_content::overwrite() {
 	switch (entry.get_mode()) {
 	case kl::overwrite_mode::SIMPLE_MODE:
-		if (!overwrite(1, 0x00)) {
-			return false;
-		}
+		if (!overwrite_byte(1, 0x00)) { return false; }
 
 		break;
 	case kl::overwrite_mode::DOE_MODE:
-		std::cerr << "DOE_MODE not implemented" << std::endl;
+		if (!overwrite_random(1)) { return false; }
+		if (!overwrite_random(2)) { return false; }
+		if (!overwrite_bytes(3, "DoE")) { return false; }
 
 		break;
 	case kl::overwrite_mode::OPENBSD_MODE:
-		std::cerr << "OPENBSD_MODE not implemented" << std::endl;
+		if (!overwrite_byte(1, 0xFF)) { return false; }
+		if (!overwrite_byte(2, 0x00)) { return false; }
+		if (!overwrite_byte(3, 0xFF)) { return false; }
 
 		break;
 	case kl::overwrite_mode::RCMP_MODE:
-		std::cerr << "RCMP_MODE not implemented" << std::endl;
+		if (!overwrite_byte(1, 0x00)) { return false; }
+		if (!overwrite_byte(2, 0xFF)) { return false; }
+		if (!overwrite_bytes(3, "RCMP")) { return false; }
 
 		break;
 	case kl::overwrite_mode::DOD_MODE:
@@ -119,31 +129,72 @@ bool kl::erase_content::overwrite() {
 	return true;
 }
 
-bool kl::erase_content::overwrite(const int pass, const int byte) {
-	std::cout << "byte: " << byte << std::endl;
-
+bool kl::erase_content::overwrite_byte(const int pass, const uint8_t byte) {
 	const uint32_t size = entry.get_buffer_size();
 
 	this->buffer = std::make_unique<uint8_t[]>(size);
 	std::memset(buffer.get(), byte, size);
 
-#if 0
+#if __DEBUG__
 	for (int i = 0; i < size; i++) {
-		std::cout << " data[" << i << "] = "
-				  << static_cast<uint32_t>(buffer.get()[i]);
+		std::cout << " data[" << i << "] = "  << uint32_t(buffer.get()[i]);
 	}
 #endif
 
 	this->file = kl::fs_util::make_open_file(entry.get_file_name(), "r+b");
 
-	if (!overwrite(pass)) {
+	if (!overwrite_data(pass)) {
 		return false;
 	}
 
 	return true;
 }
 
-bool kl::erase_content::overwrite(const int pass) {
+bool kl::erase_content::overwrite_bytes(const int pass, const char* mask) {
+	const uint32_t size = entry.get_buffer_size();
+
+	this->buffer = std::make_unique<uint8_t[]>(size);
+	init_buffer(mask, std::strlen(mask));
+
+#if __DEBUG__
+	for (int i = 0; i < size; i++) {
+		std::cout << " data[" << i << "] = "  << uint32_t(buffer.get()[i]);
+	}
+#endif
+
+	this->file = kl::fs_util::make_open_file(entry.get_file_name(), "r+b");
+
+	if (!overwrite_data(pass)) {
+		return false;
+	}
+
+	return true;
+}
+
+bool kl::erase_content::overwrite_random(const int pass) {
+	const uint32_t size = entry.get_buffer_size();
+
+	std::string random_data = random_text(size);
+	buffer = std::make_unique<uint8_t[]>(size);
+
+	std::copy(random_data.begin(), random_data.end(), buffer.get());
+
+#if __DEBUG__
+	for (int i = 0; i < size; i++) {
+		std::cout << " data[" << i << "] = "  << uint32_t(buffer.get()[i]);
+	}
+#endif
+
+	this->file = kl::fs_util::make_open_file(entry.get_file_name(), "r+b");
+
+	if (!overwrite_data(pass)) {
+		return false;
+	}
+
+	return true;
+}
+
+bool kl::erase_content::overwrite_data(const int pass) {
 	const uint32_t buffer_size = entry.get_buffer_size();
 	const uintmax_t file_size  = entry.get_file_size();
 
@@ -152,13 +203,14 @@ bool kl::erase_content::overwrite(const int pass) {
 
 	ssize_t writted = 0;
 
-#if 1
-	std::cerr << "buffer size : " << buffer_size << std::endl;
-	std::cerr << "file   size : " << file_size << std::endl;
-	std::cerr << "buffer count: " << count << std::endl;
-	std::cerr << "buffer tail : " << tail << std::endl;
-	std::cerr << "file pos    : " << ftell(file.get()) << std::endl;
+#if __DEBUG__
+	std::cerr << "buffer size 	: " << buffer_size 	<< std::endl;
+	std::cerr << "file   size 	: " << file_size 	<< std::endl;
+	std::cerr << "buffer count	: " << count 		<< std::endl;
+	std::cerr << "buffer tail 	: " << tail 		<< std::endl;
+	std::cout << "overwrite pass: " << pass 		<< std::endl;
 #endif
+
 
 	if (fseek(file.get(), 0, SEEK_SET) != 0) {
 		std::cerr << "couldn't seek in file" << std::endl;
@@ -187,12 +239,12 @@ bool kl::erase_content::overwrite(const int pass) {
 	return true;
 }
 
-ssize_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
+size_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
 	size_t writted = 0;
 
 	if (count == 0) {
 		writted = std::fwrite(buffer.get(), 1, tail, file.get());
-#if 1
+#if __DEBUG__
 		std::cerr << "writted: " << writted << " - " << tail << std::endl;
 #endif
 	} else {
@@ -201,7 +253,7 @@ ssize_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
 		}
 
 		writted += std::fwrite(buffer.get(), 1, tail, file.get());
-#if 1
+#if __DEBUG__
 		std::cerr << "writted: " << writted << " - " << entry.get_file_size() << std::endl;
 #endif
 	}
@@ -209,16 +261,30 @@ ssize_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
 	return writted;
 }
 
-void kl::erase_content::random_name(std::string& file_name, size_t length) {
+size_t kl::erase_content::init_buffer(const char* mask, const size_t length) {
+	uint8_t* data = buffer.get();
+	size_t   size = entry.get_buffer_size();
+	uint32_t i = 0;
+
+	while (size > 0) {
+		*data++ = mask[i];
+
+		if (++i == length) {
+			i = 0;
+		}
+
+		--size;
+	}
+
+	return length;
+}
+
+std::string kl::erase_content::random_text(size_t length) {
 	auto& sequence = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	std::string result;
 
 	std::mt19937 range {std::random_device{}()};
 	std::uniform_int_distribution<std::string::size_type> pick(0, sizeof(sequence) - 2);
-
-#if 0
-	std::cout << "file name: " << file_name << std::endl;
-#endif
 
 	result.reserve(length);
 
@@ -226,9 +292,5 @@ void kl::erase_content::random_name(std::string& file_name, size_t length) {
 		result += sequence[pick(range)];
 	}
 
-	file_name = result;
-
-#if 0
-	std::cout << "random name: " << file_name << std::endl;
-#endif
+	return result;
 }

@@ -1,9 +1,10 @@
 #ifndef JNI_BEAN_ERASE_ENTRY_HPP_
 #define JNI_BEAN_ERASE_ENTRY_HPP_
 
+#include <tuple>
 #include <string>
-#include <property/property.hpp>
 
+#include <property/property.hpp>
 #include "../state/overwrite_mode.hpp"
 
 namespace kl {
@@ -19,8 +20,8 @@ namespace kl {
 		erase_entry(erase_entry&&) noexcept = default;
 		erase_entry& operator=(erase_entry&&) noexcept = default;
 
-		SETTER_PRIM(std::int32_t, id);
-		GETTER_PRIM(std::int32_t, id);
+		template<std::size_t N>
+		decltype(auto) get() const;
 
 		SETTER_OBJ_CLR(std::string, file_name);
 		SETTER_OBJ_RR(std::string,  file_name);
@@ -36,8 +37,6 @@ namespace kl {
 		GETTER_ENUM(overwrite_mode, mode);
 
 	private:
-		std::int32_t id;
-
 		std::string file_name;
 		std::uintmax_t file_size;
 		std::uint32_t  buffer_size;

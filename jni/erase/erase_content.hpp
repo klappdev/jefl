@@ -41,15 +41,19 @@ namespace kl {
 		GETTER_OBJ_LR(erase_entry, entry);
 
 	private:
-		bool overwrite(const int pass, const int byte);
-		bool overwrite(const int pass);
+		bool overwrite_byte(const int pass,  const uint8_t byte);
+		bool overwrite_bytes(const int pass, const char* mask);
+		bool overwrite_random(const int pass);
+		bool overwrite_data(const int pass);
 
-		ssize_t write_buffer(const size_t count, const size_t tail);
+		size_t init_buffer(const char* mask, const size_t length);
+		size_t write_buffer(const size_t count, const size_t tail);
 
-		void random_name(std::string& file_name, size_t length);
+		std::string random_text(size_t length);
 
 		std::unique_ptr<uint8_t[]> buffer;
 		kl::file_unique_ptr file;
+
 		erase_entry entry;
 	};
 }

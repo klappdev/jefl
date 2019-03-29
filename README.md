@@ -36,6 +36,9 @@ Using this library developer can erase files in the following way.
 	
   native boolean eraseDirectory(String path, OverwrideMode mode, boolean recur) throws EraseException;
 ```
+Verified:<br/>
+Static analizer clang     <br/>
+Dynamic analizer valgrind <br/>
 
 Requirements:<br/>
 Java version: 8  <br/>

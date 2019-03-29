@@ -11,7 +11,7 @@ static jobject take_default_mode(JNIEnv *env);
 static kl::overwrite_mode take_mode(JNIEnv *env, jobject mode_object);
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(JNIEnv* env, jclass clazz, jstring path, jobject mode_object) {
+Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2(JNIEnv* env, jclass clazz, jstring path, jobject mode_object) {
 	jclass exception = env->FindClass("org/kl/error/EraseException");
 
 	const char* temp = env->GetStringUTFChars(path, nullptr);
@@ -77,17 +77,17 @@ Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMo
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2(JNIEnv* env, jclass clazz, jstring path) {
-	return Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(env, clazz, path, take_default_mode(env));
+	return Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2(env, clazz, path, take_default_mode(env));
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverrideMode_2_3Ljava_lang_String_2(JNIEnv* env, jclass clazz, jobject mode_object, jobjectArray paths) {
+Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverwrideMode_2_3Ljava_lang_String_2(JNIEnv* env, jclass clazz, jobject mode_object, jobjectArray paths) {
 	size_t length = env->GetArrayLength(paths);
 
 	for (int i = 0; i < length; i++) {
 		jstring path = (jstring) env->GetObjectArrayElement(paths, i);
 
-		if (!Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(env, clazz, path, mode_object)) {
+		if (!Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2(env, clazz, path, mode_object)) {
 			return false;
 		}
 	}
@@ -97,13 +97,14 @@ Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverrideMode_2_3Ljava_lang_S
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseFiles___3Ljava_lang_String_2(JNIEnv* env, jclass clazz, jobjectArray paths) {
-	return Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverrideMode_2_3Ljava_lang_String_2(env, clazz, take_default_mode(env), paths);
+	return Java_org_kl_erase_EraseFS_eraseFiles__Lorg_kl_state_OverwrideMode_2_3Ljava_lang_String_2(env, clazz, take_default_mode(env), paths);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2Z(JNIEnv* env, jclass clazz, jstring path, jobject mode_object, jboolean recursived) {
+Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2Z(JNIEnv* env, jclass clazz, jstring path, jobject mode_object, jboolean recursived) {
 	const char* temp = env->GetStringUTFChars(path, nullptr);
 	const auto& folder = fs::path(temp);
+	jstring file_path = nullptr;
 
 	if (!fs::exists(folder)) {
 		jclass exception = env->FindClass("org/kl/error/EraseException");
@@ -119,10 +120,22 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overr
 		return false;
 	}
 
-	for (const auto& item : fs::directory_iterator(folder)) {
-		jstring file_path = env->NewStringUTF(item.path().c_str());
+	if (recursived) {
+		for (const auto& item : fs::recursive_directory_iterator(folder)) {
+			file_path = env->NewStringUTF(item.path().c_str());
 
-		Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2(env, clazz, file_path, mode_object);
+			if (!Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2(env, clazz, file_path, mode_object)) {
+				return false;
+			}
+		}
+	} else {
+		for (const auto& item : fs::directory_iterator(folder)) {
+			file_path = env->NewStringUTF(item.path().c_str());
+
+			if (!Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2(env, clazz, file_path, mode_object)) {
+				return false;
+			}
+		}
 	}
 
 	env->ReleaseStringUTFChars(path, temp);
@@ -132,7 +145,7 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overr
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Z(JNIEnv* env, jclass clazz, jstring path, jboolean recursived) {
-	return Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverrideMode_2Z(env, clazz, path, take_default_mode(env), recursived);
+	return Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2Z(env, clazz, path, take_default_mode(env), recursived);
 }
 
 jobject take_default_mode(JNIEnv *env) {
@@ -152,16 +165,28 @@ kl::overwrite_mode take_mode(JNIEnv *env, jobject mode_object) {
 
 	const char* temp = env->GetStringUTFChars(name, nullptr);
 
-	if (temp == "DOE_MODE") {
-		mode = kl::overwrite_mode::DOE_MODE;
-	} else if (temp == "OPENBSD_MODE") {
-		mode = kl::overwrite_mode::OPENBSD_MODE;
-	} else if (temp == "DOD_MODE") {
-		mode = kl::overwrite_mode::DOD_MODE;
-	} else if (temp == "GUTMAN_MODE") {
-		mode = kl::overwrite_mode::GUTMAN_MODE;
-	} else {
+	if (std::strcmp(temp, "SIMPLE_MODE") == 0) {
 		mode = kl::overwrite_mode::SIMPLE_MODE;
+	}
+
+	if (std::strcmp(temp, "DOE_MODE") == 0) {
+		mode = kl::overwrite_mode::DOE_MODE;
+	}
+
+	if (std::strcmp(temp, "RCMP_MODE") == 0) {
+		mode = kl::overwrite_mode::RCMP_MODE;
+	}
+
+	if (std::strcmp(temp, "OPENBSD_MODE") == 0) {
+		mode = kl::overwrite_mode::OPENBSD_MODE;
+	}
+
+	if (std::strcmp(temp, "DOD_MODE") == 0) {
+		mode = kl::overwrite_mode::DOD_MODE;
+	}
+
+	if (std::strcmp(temp, "GUTMAN_MODE") == 0) {
+		mode = kl::overwrite_mode::GUTMAN_MODE;
 	}
 
 	std::cout << "mode: " << temp << std::endl;
