@@ -242,7 +242,7 @@ bool kl::erase_content::overwrite_data(const int pass) {
 	const size_t count = file_size / buffer_size;
 	const size_t tail  = file_size % buffer_size;
 
-	ssize_t writted = 0;
+	size_t writted = 0;
 
 #if __DEBUG__
 	std::cerr << "buffer size 	: " << buffer_size 	<< std::endl;
@@ -289,7 +289,7 @@ size_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
 		std::cerr << "writted: " << writted << " - " << tail << std::endl;
 #endif
 	} else {
-		for (int i = 0; i < count; i++) {
+		for (uint32_t i = 0; i < count; i++) {
 			writted += std::fwrite(buffer.get(), 1, entry.get_buffer_size(), file.get());
 		}
 

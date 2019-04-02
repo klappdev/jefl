@@ -126,6 +126,7 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overw
 
 			if (!fs::is_directory(item.path())) {
 				if (!Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2(env, clazz, file_path, mode_object)) {
+					env->ReleaseStringUTFChars(path, temp);
 					return false;
 				}
 			}
@@ -135,6 +136,7 @@ Java_org_kl_erase_EraseFS_eraseDirectory__Ljava_lang_String_2Lorg_kl_state_Overw
 			file_path = env->NewStringUTF(item.path().c_str());
 
 			if (!Java_org_kl_erase_EraseFS_eraseFile__Ljava_lang_String_2Lorg_kl_state_OverwrideMode_2(env, clazz, file_path, mode_object)) {
+				env->ReleaseStringUTFChars(path, temp);
 				return false;
 			}
 		}
