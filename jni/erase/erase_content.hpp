@@ -1,20 +1,28 @@
 #ifndef JNI_ERASE_ERASE_CONTENT_HPP_
 #define JNI_ERASE_ERASE_CONTENT_HPP_
 
-#include <filesystem>
 #include <iostream>
 
 #include <memory>
 #include <cstring>
 #include <random>
 
+#if __has_include(<filesystem>)
+# include <filesystem>
+  namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+# include <experimental/filesystem>
+  namespace fs = std::experimental::filesystem;
+#else
+# error "missing <filesystem>"
+#endif
+
 #include <property/property.hpp>
 
 #include "../bean/erase_entry.hpp"
-#include "../fs/fs_util.hpp"
-#include "../fs/file_unit.hpp"
-
-namespace fs = std::filesystem;
+#include "../util/file_unit.hpp"
+#include "../util/fs_util.hpp"
+#include "../util/log_util.hpp"
 
 using kl::file_literals::operator ""_kB;
 using kl::file_literals::operator ""_MB;

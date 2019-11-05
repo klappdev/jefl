@@ -1,7 +1,5 @@
 #include "erase_content.hpp"
 
-#define __DEBUG__ 0
-
 kl::erase_content::erase_content() {}
 kl::erase_content::~erase_content() {}
 
@@ -48,7 +46,7 @@ bool kl::erase_content::init_erase_etry(const fs::path& file, kl::overwrite_mode
 	}
 
 	if (entry.get_buffer_size() <= 0) {
-		std::cerr << "buffer size can't be negative: " << entry.get_buffer_size() << std::endl;
+		std::cerr << "buffer size can't be negative: "<< entry.get_buffer_size() << std::endl;
 		return false;
 	}
 
@@ -74,9 +72,7 @@ bool kl::erase_content::remove(const fs::path& file) {
 
 	file_name = random_text(file_name.size());
 
-#if __DEBUG__
-	std::cout << "file name: "  << file_name	<< std::endl;
-#endif
+	kl::log_util::debug("file name: ", file_name);
 
 	copy_file.replace_filename(fs::path(file_name));
 
@@ -171,18 +167,18 @@ bool kl::erase_content::overwrite() {
 }
 
 bool kl::erase_content::overwrite_byte(const int pass, const uint8_t byte) {
-	const uint32_t size = entry.get_buffer_size();
+	const auto& [file_name, file_size, buffer_size, mode] = entry;
 
-	this->buffer = std::make_unique<uint8_t[]>(size);
-	std::memset(buffer.get(), byte, size);
+	this->buffer = std::make_unique<uint8_t[]>(buffer_size);
+	std::memset(buffer.get(), byte, buffer_size);
 
 #if __DEBUG__
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < buffer_size; i++) {
 		std::cout << " data[" << i << "] = "  << uint32_t(buffer.get()[i]);
 	}
 #endif
 
-	this->file = kl::fs_util::make_open_file(entry.get_file_name(), "r+b");
+	this->file = kl::fs_util::make_open_file(file_name, "r+b");
 
 	if (!overwrite_data(pass)) {
 		return false;
@@ -192,18 +188,18 @@ bool kl::erase_content::overwrite_byte(const int pass, const uint8_t byte) {
 }
 
 bool kl::erase_content::overwrite_bytes(const int pass, const char* mask) {
-	const uint32_t size = entry.get_buffer_size();
+	const auto& [file_name, file_size, buffer_size, mode] = entry;
 
-	this->buffer = std::make_unique<uint8_t[]>(size);
+	this->buffer = std::make_unique<uint8_t[]>(buffer_size);
 	init_buffer(mask, std::strlen(mask));
 
 #if __DEBUG__
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < buffer_size; i++) {
 		std::cout << " data[" << i << "] = "  << uint32_t(buffer.get()[i]);
 	}
 #endif
 
-	this->file = kl::fs_util::make_open_file(entry.get_file_name(), "r+b");
+	this->file = kl::fs_util::make_open_file(file_name, "r+b");
 
 	if (!overwrite_data(pass)) {
 		return false;
@@ -213,20 +209,20 @@ bool kl::erase_content::overwrite_bytes(const int pass, const char* mask) {
 }
 
 bool kl::erase_content::overwrite_random(const int pass) {
-	const uint32_t size = entry.get_buffer_size();
+	const auto& [file_name, file_size, buffer_size, mode] = entry;
 
-	std::string random_data = random_text(size);
-	buffer = std::make_unique<uint8_t[]>(size);
+	std::string random_data = random_text(buffer_size);
+	buffer = std::make_unique<uint8_t[]>(buffer_size);
 
 	std::copy(random_data.begin(), random_data.end(), buffer.get());
 
 #if __DEBUG__
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < buffer_size; i++) {
 		std::cout << " data[" << i << "] = "  << uint32_t(buffer.get()[i]);
 	}
 #endif
 
-	this->file = kl::fs_util::make_open_file(entry.get_file_name(), "r+b");
+	this->file = kl::fs_util::make_open_file(file_name, "r+b");
 
 	if (!overwrite_data(pass)) {
 		return false;
@@ -236,22 +232,18 @@ bool kl::erase_content::overwrite_random(const int pass) {
 }
 
 bool kl::erase_content::overwrite_data(const int pass) {
-	const uint32_t buffer_size = entry.get_buffer_size();
-	const uintmax_t file_size  = entry.get_file_size();
+	const auto& [file_name, file_size, buffer_size, mode] = entry;
 
 	const size_t count = file_size / buffer_size;
 	const size_t tail  = file_size % buffer_size;
 
 	size_t writted = 0;
 
-#if __DEBUG__
-	std::cerr << "buffer size 	: " << buffer_size 	<< std::endl;
-	std::cerr << "file   size 	: " << file_size 	<< std::endl;
-	std::cerr << "buffer count	: " << count 		<< std::endl;
-	std::cerr << "buffer tail 	: " << tail 		<< std::endl;
-	std::cout << "overwrite pass: " << pass 		<< std::endl;
-#endif
-
+	kl::log_util::error("buffer size   : ", buffer_size);
+	kl::log_util::error("file   size   : ", file_size);
+	kl::log_util::error("buffer count  : ", count);
+	kl::log_util::error("buffer tail   : ", tail);
+	kl::log_util::debug("overwrite pass: ", pass);
 
 	if (fseek(file.get(), 0, SEEK_SET) != 0) {
 		std::cerr << "couldn't seek in file" << std::endl;
@@ -281,22 +273,21 @@ bool kl::erase_content::overwrite_data(const int pass) {
 }
 
 size_t kl::erase_content::write_buffer(const size_t count, const size_t tail) {
+	const auto& [file_name, file_size, buffer_size, mode] = entry;
 	size_t writted = 0;
 
 	if (count == 0) {
 		writted = std::fwrite(buffer.get(), 1, tail, file.get());
-#if __DEBUG__
-		std::cerr << "writted: " << writted << " - " << tail << std::endl;
-#endif
+
+		kl::log_util::error("writted: ", writted, " - ", tail);
 	} else {
 		for (uint32_t i = 0; i < count; i++) {
-			writted += std::fwrite(buffer.get(), 1, entry.get_buffer_size(), file.get());
+			writted += std::fwrite(buffer.get(), 1, buffer_size, file.get());
 		}
 
 		writted += std::fwrite(buffer.get(), 1, tail, file.get());
-#if __DEBUG__
-		std::cerr << "writted: " << writted << " - " << entry.get_file_size() << std::endl;
-#endif
+
+		kl::log_util::error("writted: ", writted, " - ", file_size);
 	}
 
 	return writted;

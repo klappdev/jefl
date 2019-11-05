@@ -1,0 +1,8 @@
+.settings/
+Debug/
+bin/
+.cproject
+.classpath
+.project
+task.txt
+/Default/

@@ -5,7 +5,6 @@ CFLAGS = -g3 -std=c++17 -ggdb3 -O0 -Wno-literal-suffix
 CPP_LIB = -lstdc++fs
 SRC_MAIN = erase_fs.o
 SRC_ERASE = erase_content.o
-SRC_BEAN = erase_entry.o
 SRC_FS = fs_util.o
 
 UNAME := $(shell uname)
@@ -22,13 +21,10 @@ vpath %.class $(SRC_DIR)
 
 all : $(TARGET)
 
-$(TARGET) : $(SRC_MAIN) $(SRC_ERASE) $(SRC_BEAN) $(SRC_FS)
+$(TARGET) : $(SRC_MAIN) $(SRC_ERASE) $(SRC_FS)
 	g++ $(CFLAGS) -W -shared -o $@ $+ $(CPP_LIB)
 
-fs_util.o : ../jni/fs/fs_util.cpp ../jni/fs/fs_util.hpp  
-	g++ $(CFLAGS) -fPIC -c $< -o $@
-
-erase_entry.o : ../jni/bean/erase_entry.cpp ../jni/bean/erase_entry.hpp  
+fs_util.o : ../jni/util/fs_util.cpp ../jni/util/fs_util.hpp  
 	g++ $(CFLAGS) -fPIC -c $< -o $@
 
 erase_content.o : ../jni/erase/erase_content.cpp ../jni/erase/erase_content.hpp  

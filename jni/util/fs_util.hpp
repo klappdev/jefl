@@ -1,5 +1,5 @@
-#ifndef JNI_FS_FS_UTIL_HPP_
-#define JNI_FS_FS_UTIL_HPP_
+#ifndef JNI_UTIL_FS_UTIL_HPP_
+#define JNI_UTIL_FS_UTIL_HPP_
 
 #include <iostream>
 #include <string>
@@ -12,17 +12,9 @@
 #	include <sys/types.h>
 #endif
 
+#include "log_util.hpp"
+
 namespace kl {
-	struct file_deleter {
-		void operator()(FILE* fd) {
-			if (fd != nullptr) {
-				std::cout << "close file " << fd << std::endl;
-
-				fclose(fd);
-			}
-		}
-	};
-
 #if defined(_MSC_VER)
 	struct handle_deleter {
 		void operator()(HANDLE handle) const {
@@ -34,9 +26,19 @@ namespace kl {
 
 	using handle_unique_ptr = std::unique_ptr<void, handle_deleter>;
 #endif
+	struct file_deleter {
+		void operator()(FILE* fd) {
+			if (fd != nullptr) {
+				kl::log_util::debug("close file ", fd);
+
+				fclose(fd);
+			}
+		}
+	};
+
 	using file_unique_ptr = std::unique_ptr<FILE, file_deleter>;
 
-	class fs_util {
+	class fs_util final {
 	public:
 		fs_util();
 		~fs_util();
@@ -51,4 +53,4 @@ namespace kl {
 	};
 }
 
-#endif /* JNI_FS_FS_UTIL_HPP_ */
+#endif /* JNI_UTIL_FS_UTIL_HPP_ */

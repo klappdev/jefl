@@ -12,6 +12,4 @@ namespace kl {
 	};
 }
 
-
-
 #endif /* JNI_STATE_OVERWRITE_MODE_HPP_ */

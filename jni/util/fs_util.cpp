@@ -1,4 +1,4 @@
-#include "fs_util.hpp"
+#include "../util/fs_util.hpp"
 
 
 kl::fs_util::fs_util() {}
@@ -52,7 +52,7 @@ std::size_t kl::fs_util::count_hard_link(const std::string& path) {
 kl::file_unique_ptr kl::fs_util::make_open_file(const std::string& path, const std::string& mode) {
 	FILE *handle = fopen(path.c_str(), mode.c_str());
 
-	std::cout << "open file " << path << std::endl;
+	kl::log_util::debug("open file ", path);
 
 	if (handle == nullptr) {
 		return nullptr;
