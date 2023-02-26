@@ -14,12 +14,12 @@ For secure erase file used next steps:
   
 There are the following methods of overwrite content file:
 
-    > Simple  method - overwrite 1 pass 0x00 bytes   
-    > DOE     method - overwrite 3 pass random, random, "DoE"     
+    > Simple  method - overwrite 1 pass 0x00 bytes
+    > DOE     method - overwrite 3 pass random, random, "DoE"
     > RCMP    method - overwrite 3 pass 0x00 ,0xFF, "RCMP"
     > OPENBSD method - overwrite 3 pass 0xFF, 0x00, 0xFF bytes
     > DOD     method - overwrite 7 pass 
-    > Gutmann method - overwrite 35 pass  
+    > Gutmann method - overwrite 35 pass
 
 Using this library developer can erase files in the following way.
 
@@ -37,10 +37,10 @@ Using this library developer can erase files in the following way.
   native boolean eraseDirectory(String path, OverwrideMode mode, boolean recur) throws EraseException;
 ```
 Verified:<br/>
-Static analizer clang     <br/>
-Dynamic analizer valgrind <br/>
+Static  analizer: clang-tidy  <br/>
+Dynamic analizer: valgrind    <br/>
 
 Requirements:<br/>
-Java version: 8  <br/>
-C++  version: 17 <br/>
+Java min version: 11  <br/>
+C++  min version: 20 <br/>
 

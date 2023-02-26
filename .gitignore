@@ -4,5 +4,13 @@ bin/
 .cproject
 .classpath
 .project
-task.txt
 /Default/
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+/jefl/
+/.apt_generated/
+/.apt_generated_tests/
